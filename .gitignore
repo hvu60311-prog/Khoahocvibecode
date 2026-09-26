@@ -1,0 +1,182 @@
+# ==========================================
+# Operating System Files (Hệ điều hành / File rác hệ thống)
+# ==========================================
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# ==========================================
+# Video & Audio Files (File âm thanh & Video dung lượng lớn)
+# ==========================================
+# Video
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.wmv
+*.flv
+*.webm
+*.m4v
+*.mpg
+*.mpeg
+*.3gp
+*.ts
+
+# Audio
+*.mp3
+*.wav
+*.aac
+*.flac
+*.ogg
+*.m4a
+*.wma
+*.aiff
+
+# ==========================================
+# Large Files & Archives (Tệp nén, dữ liệu lớn, model AI)
+# ==========================================
+# Compressed archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+*.iso
+*.dmg
+*.gz
+*.xz
+*.bz2
+
+# Datasets & Big Data
+*.csv.gz
+*.parquet
+*.dump
+*.sql.gz
+*.db
+*.sqlite3
+
+# AI & Machine Learning Checkpoints / Weights
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+*.ckpt
+*.h5
+*.tflite
+*.weights
+
+# Binary & Executable Files
+*.exe
+*.dll
+*.so
+*.dylib
+*.msi
+*.apk
+*.aab
+
+# ==========================================
+# Environment Variables & Secrets (Bảo mật tài khoản / Token)
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+token.json
+secrets.json
+
+# ==========================================
+# Logs & Temporary Files (Nhật ký & File tạm)
+# ==========================================
+*.log
+logs/
+*.tmp
+*.temp
+tmp/
+temp/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================================
+# IDEs & Code Editors (Cấu hình trình soạn thảo)
+# ==========================================
+.idea/
+*.iml
+*.sublime-workspace
+*.sublime-project
+*.swp
+*.swo
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ==========================================
+# Common Dependencies & Build Outputs (Dependencies & Build)
+# ==========================================
+# Node.js
+node_modules/
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+coverage/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
