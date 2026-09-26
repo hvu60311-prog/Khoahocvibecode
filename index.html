@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô Phỏng Dải Ngân Hà - Milky Way Galaxy</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background-color: #030408;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #e2e8f0;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    canvas:active {
+      cursor: grabbing;
+    }
+
+    /* UI Overlay */
+    .overlay {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      z-index: 10;
+      pointer-events: none;
+      max-width: 380px;
+    }
+
+    .glass-card {
+      background: rgba(10, 14, 26, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 20px 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      pointer-events: auto;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 30%, #ffd080 70%, #88c0fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 6px;
+    }
+
+    p.subtitle {
+      font-size: 0.82rem;
+      color: #94a3b8;
+      line-height: 1.45;
+      margin-bottom: 14px;
+    }
+
+    .color-legend {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px 12px;
+      font-size: 0.74rem;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      flex: 1;
+      padding: 9px 14px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.08) 100%);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 12px rgba(255, 200, 100, 0.25);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .slider-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 0.78rem;
+      color: #94a3b8;
+    }
+
+    .slider-row input[type="range"] {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.2);
+      appearance: none;
+      outline: none;
+    }
+
+    .slider-row input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffd080;
+      cursor: pointer;
+      box-shadow: 0 0 6px rgba(255, 208, 128, 0.8);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: #38bdf8;
+      margin-top: 4px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      background: #38bdf8;
+      border-radius: 50%;
+      animation: pulse 1.6s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.3); }
+    }
+
+    .instructions {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.45);
+      font-size: 0.76rem;
+      pointer-events: none;
+      text-align: center;
+      background: rgba(5, 7, 15, 0.4);
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="galaxyCanvas"></canvas>
+
+  <div class="overlay">
+    <div class="glass-card">
+      <h1>Dải Ngân Hà (Milky Way)</h1>
+      <p class="subtitle">Mô phỏng màu sắc thiên văn thực tế & hiệu ứng sinh thành mở rộng từ tâm lõi thiên hà.</p>
+
+      <div class="color-legend">
+        <div class="legend-item">
+          <span class="color-dot" style="background:#ffdd99; color:#ffdd99;"></span>
+          <span>Tâm lõi (Sao già vàng)</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-dot" style="background:#8ec5fc; color:#8ec5fc;"></span>
+          <span>Nhánh xoắn (Sao trẻ OB)</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-dot" style="background:#ff6ea7; color:#ff6ea7;"></span>
+          <span>Tinh vân H-II (Hồng tím)</span>
+        </div>
+        <div class="legend-item">
+          <span class="color-dot" style="background:#503629; color:#503629;"></span>
+          <span>Bụi vũ trụ (Dark dust)</span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="button-group">
+          <button id="btnReplay">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            Tái sinh (Replay)
+          </button>
+          <button id="btnSound">
+            <svg id="soundIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            Âm thanh Vũ Trụ
+          </button>
+        </div>
+
+        <div class="slider-row">
+          <span>Tốc độ quay</span>
+          <input type="range" id="speedSlider" min="0" max="2.5" step="0.1" value="1.0">
+          <span id="speedValue">1.0x</span>
+        </div>
+
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span id="statusText">22,000 thực thể thiên văn học</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="instructions">
+    Kéo chuột để xoay góc nhìn 3D • Cuộn chuột để Phóng to / Thu nhỏ
+  </div>
+
+  <script>
+    const canvas = document.getElementById("galaxyCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let width, height;
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resize);
+    resize();
+
+    // ==========================================
+    // CẤU HÌNH THIÊN VĂN & MÀU SẮC THỰC TẾ
+    // ==========================================
+    // Dải ngân hà có lõi vàng ấm (sao già loại K, M), các nhánh xoắn xanh sáng (sao khổng lồ trẻ loại O, B),
+    // các đám mây khí ion hóa hydro H-II màu đỏ hồng (emission nebulae) và dải bụi tối che khuất.
+    const CONFIG = {
+      particleCount: 22000,
+      arms: 4,               // 4 nhánh xoắn chính (Perseus, Scutum-Centaurus, Sagittarius, Norma)
+      maxRadius: 360,
+      armTightness: 0.52,     // Tham số xoắn ốc logarithmic
+      coreRadius: 65,
+      coreRatio: 0.28,        // 28% hạt nằm ở tâm / thanh chắn trung tâm (Galactic Bar)
+      dustRatio: 0.12,        // 12% hạt là bụi tối hấp thụ ánh sáng
+      nebulaRatio: 0.08       // 8% hạt là cụm tinh vân H-II
+    };
+
+    // Bảng màu thực tế (Realistic Milky Way Photometry Colors)
+    const CORE_COLORS = [
+      "rgba(255, 255, 240,", // Trắng vàng chói rực
+      "rgba(255, 230, 160,", // Vàng ấm
+      "rgba(255, 195, 110,", // Hổ phách
+      "rgba(255, 160, 75,"   // Cam hoàng hôn
+    ];
+
+    const ARM_COLORS = [
+      "rgba(235, 245, 255,", // Trắng ánh lam
+      "rgba(185, 220, 255,", // Xanh lam nhạt
+      "rgba(140, 190, 255,", // Xanh lam O/B
+      "rgba(110, 165, 255,"  // Xanh dương sâu
+    ];
+
+    const NEBULA_COLORS = [
+      "rgba(255, 105, 180,", // Hồng thạch anh (H-alpha)
+      "rgba(230, 80, 150,",  // Đỏ mận sáng
+      "rgba(180, 90, 240,"   // Tím ion hóa
+    ];
+
+    const DUST_COLORS = [
+      "rgba(35, 20, 14,",    // Nâu khói sẫm
+      "rgba(24, 15, 12,",    // Đen bụi than
+      "rgba(45, 28, 20,"     // Nâu đất vũ trụ
+    ];
+
+    // Khởi tạo tập hợp hạt sao
+    const stars = [];
+
+    function createGalaxy() {
+      stars.length = 0;
+
+      for (let i = 0; i < CONFIG.particleCount; i++) {
+        const isCore = Math.random() < CONFIG.coreRatio;
+        const isDust = !isCore && Math.random() < CONFIG.dustRatio;
+        const isNebula = !isCore && !isDust && Math.random() < CONFIG.nebulaRatio;
+
+        let dist, angle, colorPrefix, size, baseAlpha;
+        let zHeight;
+
+        if (isCore) {
+          // Lõi elip / Thanh chắn trung tâm (Galactic Bar)
+          dist = Math.pow(Math.random(), 2.2) * CONFIG.coreRadius;
+          const barAngle = 0.55; // Độ nghiêng của thanh chắn trung tâm ngân hà
+          const elongation = 1.8;
+          angle = Math.random() * Math.PI * 2;
+          
+          colorPrefix = CORE_COLORS[Math.floor(Math.random() * CORE_COLORS.length)];
+          size = Math.random() * 1.8 + 0.5;
+          baseAlpha = Math.random() * 0.7 + 0.3;
+          zHeight = (Math.random() - 0.5) * 45 * (1 - dist / CONFIG.coreRadius);
+        } else if (isDust) {
+          // Dải bụi tối nằm dọc rìa trong các nhánh xoắn
+          const arm = Math.floor(Math.random() * CONFIG.arms);
+          const t = Math.pow(Math.random(), 0.85);
+          dist = CONFIG.coreRadius * 0.7 + t * (CONFIG.maxRadius - CONFIG.coreRadius * 0.7);
+          const spiralAngle = dist * (CONFIG.armTightness / 50) + (arm * (Math.PI * 2 / CONFIG.arms));
+          const dispersion = (Math.random() - 0.5) * (0.35 + dist * 0.001);
+          angle = spiralAngle + dispersion - 0.15; // Lệch vào bờ trước của nhánh
+
+          colorPrefix = DUST_COLORS[Math.floor(Math.random() * DUST_COLORS.length)];
+          size = Math.random() * 5.0 + 3.0; // Kích thước hạt bụi lớn hơn tạo thành đám mây
+          baseAlpha = Math.random() * 0.22 + 0.12;
+          zHeight = (Math.random() - 0.5) * 12;
+        } else if (isNebula) {
+          // Vùng hình thành sao H-II hồng tím
+          const arm = Math.floor(Math.random() * CONFIG.arms);
+          const t = Math.pow(Math.random(), 0.9);
+          dist = CONFIG.coreRadius + t * (CONFIG.maxRadius - CONFIG.coreRadius);
+          const spiralAngle = dist * (CONFIG.armTightness / 50) + (arm * (Math.PI * 2 / CONFIG.arms));
+          const dispersion = (Math.random() - 0.5) * 0.22;
+          angle = spiralAngle + dispersion;
+
+          colorPrefix = NEBULA_COLORS[Math.floor(Math.random() * NEBULA_COLORS.length)];
+          size = Math.random() * 3.2 + 1.2;
+          baseAlpha = Math.random() * 0.45 + 0.35;
+          zHeight = (Math.random() - 0.5) * 20;
+        } else {
+          // Các vì sao bình thường phân bổ theo 4 nhánh xoắn
+          const arm = Math.floor(Math.random() * CONFIG.arms);
+          const t = Math.pow(Math.random(), 0.92);
+          dist = CONFIG.coreRadius * 0.8 + t * (CONFIG.maxRadius - CONFIG.coreRadius * 0.8);
+          
+          const spiralAngle = dist * (CONFIG.armTightness / 50) + (arm * (Math.PI * 2 / CONFIG.arms));
+          // Độ tản mác tăng dần ra ngoài rìa
+          const spread = (Math.random() - 0.5) * (0.42 + (dist / CONFIG.maxRadius) * 0.45);
+          angle = spiralAngle + spread;
+
+          colorPrefix = ARM_COLORS[Math.floor(Math.random() * ARM_COLORS.length)];
+          size = Math.random() * 1.5 + 0.4;
+          baseAlpha = Math.random() * 0.65 + 0.25;
+          zHeight = (Math.random() - 0.5) * (25 + (dist / CONFIG.maxRadius) * 15);
+        }
+
+        // Vận tốc góc theo cơ học thiên hà (định luật quay vi sai: lõi quay nhanh hơn ngoài mép)
+        const orbitalSpeed = (14.0 / (Math.pow(dist + 30, 0.65))) * 0.0035;
+
+        stars.push({
+          targetDist: dist,
+          angle: angle,
+          z: zHeight,
+          speed: orbitalSpeed,
+          size: size,
+          color: colorPrefix,
+          baseAlpha: baseAlpha,
+          twinkleSpeed: Math.random() * 0.04 + 0.01,
+          twinklePhase: Math.random() * Math.PI * 2,
+          isDust: isDust,
+          isCore: isCore,
+          isNebula: isNebula,
+          // Tham số cho hiệu ứng nảy mầm / bung mở từ tâm (Big Bang / Expansion Wave)
+          expandDelay: (dist / CONFIG.maxRadius) * 2.8 + Math.random() * 0.4,
+          currentDist: 0,
+          currentAlpha: 0
+        });
+      }
+    }
+
+    createGalaxy();
+
+    // ==========================================
+    // TIẾN TRÌNH THỜI GIAN & HOẠT CẢNH MỞ RỘNG
+    // ==========================================
+    let expansionStartTime = performance.now();
+    const EXPANSION_DURATION = 4200; // 4.2 giây để toàn bộ ngân hà vươn mở từ tâm
+    let isExpanding = true;
+
+    function restartExpansion() {
+      expansionStartTime = performance.now();
+      isExpanding = true;
+      stars.forEach(s => {
+        s.currentDist = 0;
+        s.currentAlpha = 0;
+      });
+      document.getElementById("statusText").innerText = "Đang mở rộng từ tâm lõi...";
+    }
+
+    // ==========================================
+    // TƯƠNG TÁC GÓC NHÌN 3D (CAMERA)
+    // ==========================================
+    let rotX = 1.05;  // Nghiêng nhìn từ trên xuống để thấy rõ hình thái đĩa xoắn
+    let rotY = 0.0;
+    let targetRotX = 1.05;
+    let targetRotY = 0.0;
+    let zoom = 1.15;
+    let targetZoom = 1.15;
+    let isDragging = false;
+    let lastMouseX = 0, lastMouseY = 0;
+
+    window.addEventListener("mousedown", (e) => {
+      if (e.target.closest(".glass-card")) return;
+      isDragging = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      targetRotY += dx * 0.005;
+      targetRotX += dy * 0.005;
+      // Giới hạn góc nghiêng để không bị lộn ngược
+      targetRotX = Math.max(0.1, Math.min(Math.PI - 0.1, targetRotX));
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+
+    window.addEventListener("mouseup", () => isDragging = false);
+
+    window.addEventListener("wheel", (e) => {
+      targetZoom *= (e.deltaY > 0 ? 0.92 : 1.08);
+      targetZoom = Math.max(0.4, Math.min(3.5, targetZoom));
+    }, { passive: true });
+
+    // Touch support cho mobile / màn hình cảm ứng
+    window.addEventListener("touchstart", (e) => {
+      if (e.touches.length === 1 && !e.target.closest(".glass-card")) {
+        isDragging = true;
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+      }
+    });
+
+    window.addEventListener("touchmove", (e) => {
+      if (isDragging && e.touches.length === 1) {
+        const dx = e.touches[0].clientX - lastMouseX;
+        const dy = e.touches[0].clientY - lastMouseY;
+        targetRotY += dx * 0.006;
+        targetRotX += dy * 0.006;
+        targetRotX = Math.max(0.1, Math.min(Math.PI - 0.1, targetRotX));
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+      }
+    });
+
+    window.addEventListener("touchend", () => isDragging = false);
+
+    // ==========================================
+    // ĐIỀU KHIỂN UI
+    // ==========================================
+    const speedSlider = document.getElementById("speedSlider");
+    const speedValue = document.getElementById("speedValue");
+    let speedMultiplier = 1.0;
+    speedSlider.addEventListener("input", (e) => {
+      speedMultiplier = parseFloat(e.target.value);
+      speedValue.innerText = speedMultiplier.toFixed(1) + "x";
+    });
+
+    document.getElementById("btnReplay").addEventListener("click", () => {
+      restartExpansion();
+      if (audioCtx && isAudioPlaying) playBirthChime();
+    });
+
+    // ==========================================
+    // ÂM THANH KHÔNG GIAN (WEB AUDIO API SYNTH)
+    // ==========================================
+    let audioCtx = null;
+    let isAudioPlaying = false;
+    let droneOsc1, droneOsc2, filterNode;
+
+    function toggleAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Low ambient drone
+        droneOsc1 = audioCtx.createOscillator();
+        droneOsc2 = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        filterNode = audioCtx.createBiquadFilter();
+
+        droneOsc1.type = "sine";
+        droneOsc1.frequency.setValueAtTime(55, audioCtx.currentTime); // Note A1
+
+        droneOsc2.type = "triangle";
+        droneOsc2.frequency.setValueAtTime(110.5, audioCtx.currentTime); // Detuned A2
+
+        filterNode.type = "lowpass";
+        filterNode.frequency.setValueAtTime(260, audioCtx.currentTime);
+
+        gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+
+        droneOsc1.connect(filterNode);
+        droneOsc2.connect(filterNode);
+        filterNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        droneOsc1.start();
+        droneOsc2.start();
+      }
+
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
+        isAudioPlaying = true;
+      } else if (isAudioPlaying) {
+        audioCtx.suspend();
+        isAudioPlaying = false;
+      } else {
+        audioCtx.resume();
+        isAudioPlaying = true;
+      }
+
+      document.getElementById("btnSound").style.background = isAudioPlaying 
+        ? "linear-gradient(180deg, rgba(56, 189, 248, 0.35) 0%, rgba(56, 189, 248, 0.15) 100%)"
+        : "";
+      document.getElementById("btnSound").style.borderColor = isAudioPlaying ? "rgba(56, 189, 248, 0.5)" : "";
+    }
+
+    function playBirthChime() {
+      if (!audioCtx || audioCtx.state !== "running") return;
+      const chimeOsc = audioCtx.createOscillator();
+      const chimeGain = audioCtx.createGain();
+      chimeOsc.type = "sine";
+      chimeOsc.frequency.setValueAtTime(440, audioCtx.currentTime);
+      chimeOsc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 3.0);
+      
+      chimeGain.gain.setValueAtTime(0.01, audioCtx.currentTime);
+      chimeGain.gain.linearRampToValueAtTime(0.2, audioCtx.currentTime + 1.2);
+      chimeGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 4.0);
+
+      chimeOsc.connect(chimeGain);
+      chimeGain.connect(audioCtx.destination);
+      chimeOsc.start();
+      chimeOsc.stop(audioCtx.currentTime + 4.2);
+    }
+
+    document.getElementById("btnSound").addEventListener("click", () => {
+      toggleAudio();
+      if (isAudioPlaying) playBirthChime();
+    });
+
+    // ==========================================
+    // VÒNG LẶP RENDER CHÍNH (RENDER LOOP)
+    // ==========================================
+    let lastTime = performance.now();
+
+    function render(currentTime) {
+      const dt = (currentTime - lastTime) / 1000;
+      lastTime = currentTime;
+
+      // Xử lý làm mượt camera (Inertia damping)
+      rotX += (targetRotX - rotX) * 0.08;
+      rotY += (targetRotY - rotY) * 0.08;
+      zoom += (targetZoom - zoom) * 0.08;
+
+      // Xóa màn hình với sắc thái không gian vũ trụ sâu thẳm
+      ctx.fillStyle = "#030408";
+      ctx.fillRect(0, 0, width, height);
+
+      // Quầng sáng mờ nền không gian (Distant Cosmic Glow)
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      const elapsedExpansion = (currentTime - expansionStartTime) / 1000;
+      const expansionGlobalFactor = Math.min(1.0, elapsedExpansion / (EXPANSION_DURATION / 1000));
+      
+      if (expansionGlobalFactor >= 1.0 && isExpanding) {
+        isExpanding = false;
+        document.getElementById("statusText").innerText = "22,000 thực thể thiên văn học (Trạng thái ổn định)";
+      }
+
+      // Vẽ vầng sáng rực rỡ ở tâm lõi phát tán ra ngoài khi bắt đầu sinh thành
+      if (elapsedExpansion < 4.5) {
+        const coreFlareRadius = Math.min(260, 40 + elapsedExpansion * 55) * zoom;
+        const flareAlpha = Math.max(0, 1.0 - Math.pow(elapsedExpansion / 4.5, 1.5)) * 0.85;
+        if (flareAlpha > 0.01) {
+          const coreGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreFlareRadius);
+          coreGrad.addColorStop(0, `rgba(255, 255, 250, ${flareAlpha})`);
+          coreGrad.addColorStop(0.2, `rgba(255, 220, 140, ${flareAlpha * 0.7})`);
+          coreGrad.addColorStop(0.5, `rgba(180, 140, 255, ${flareAlpha * 0.3})`);
+          coreGrad.addColorStop(1, "rgba(3, 4, 8, 0)");
+          ctx.fillStyle = coreGrad;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, coreFlareRadius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Thiết lập phép biến đổi ma trận 3D đơn giản
+      const cosX = Math.cos(rotX), sinX = Math.sin(rotX);
+      const cosY = Math.cos(rotY), sinY = Math.sin(rotY);
+
+      // Chia làm 2 lượt vẽ:
+      // Lượt 1: Bụi tối (Dark Dust) - dùng chế độ hòa trộn thường source-over
+      // Lượt 2: Các vì sao & Tinh vân - dùng chế độ cộng ánh sáng (lighter)
+      
+      const dustToRender = [];
+      const starsToRender = [];
+
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+
+        // Cập nhật góc quay theo quỹ đạo
+        s.angle += s.speed * speedMultiplier;
+
+        // Tính toán khoảng cách nở ra từ tâm
+        const starDelay = s.expandDelay;
+        if (elapsedExpansion > starDelay) {
+          const progress = Math.min(1.0, (elapsedExpansion - starDelay) / 1.6);
+          // Easing Cubic Out tạo chuyển động bung ra mượt mà
+          const easeOut = 1 - Math.pow(1 - progress, 3);
+          s.currentDist = s.targetDist * easeOut;
+          s.currentAlpha = s.baseAlpha * easeOut;
+        } else {
+          s.currentDist = 0;
+          s.currentAlpha = 0;
+          continue; // Chưa đến thời điểm mở rộng tới hạt này
+        }
+
+        // Tọa độ thực trong mặt phẳng thiên hà
+        const gx = Math.cos(s.angle) * s.currentDist;
+        const gy = Math.sin(s.angle) * s.currentDist;
+        const gz = s.z;
+
+        // Xoay quanh trục Y (Yaw)
+        const x1 = gx * cosY - gy * sinY;
+        const y1 = gx * sinY + gy * cosY;
+        const z1 = gz;
+
+        // Xoay quanh trục X (Pitch - độ nghiêng)
+        const x2 = x1;
+        const y2 = y1 * cosX - z1 * sinX;
+        const z2 = y1 * sinX + z1 * cosX;
+
+        // Phép chiếu phối cảnh (Perspective projection)
+        const distance = 800;
+        const fov = distance / (distance + z2);
+        const screenX = centerX + x2 * zoom * fov;
+        const screenY = centerY + y2 * zoom * fov;
+
+        // Nhấp nháy sao (Twinkle)
+        const twinkle = Math.sin(currentTime * s.twinkleSpeed + s.twinklePhase) * 0.15;
+        const finalAlpha = Math.max(0.05, Math.min(1.0, s.currentAlpha + twinkle));
+        const finalSize = Math.max(0.3, s.size * zoom * fov);
+
+        const item = {
+          x: screenX,
+          y: screenY,
+          size: finalSize,
+          color: s.color,
+          alpha: finalAlpha,
+          zDepth: z2,
+          isDust: s.isDust
+        };
+
+        if (s.isDust) {
+          dustToRender.push(item);
+        } else {
+          starsToRender.push(item);
+        }
+      }
+
+      // Sắp xếp bụi theo chiều sâu Z để vẽ chân thực
+      dustToRender.sort((a, b) => b.zDepth - a.zDepth);
+
+      // 1. VẼ CÁC VÙNG BỤI TỐI (DARK NEBULAE / DUST LANES)
+      ctx.globalCompositeOperation = "source-over";
+      for (let i = 0; i < dustToRender.length; i++) {
+        const d = dustToRender[i];
+        ctx.fillStyle = `${d.color}${d.alpha})`;
+        ctx.beginPath();
+        ctx.arc(d.x, d.y, d.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 2. VẼ CÁC VÌ SAO & KHÍ PHÁT QUANG (H-II NEBULAE & STARS)
+      // Dùng 'lighter' để các điểm sáng giao nhau rực rỡ chân thực như ánh sáng quang học
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < starsToRender.length; i++) {
+        const s = starsToRender[i];
+        ctx.fillStyle = `${s.color}${s.alpha})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 3. VẦNG QUANG LÕI TRUNG TÂM (GALACTIC BULGE GLOW)
+      // Nhân Ngân hà (Sagittarius A* Bulge) luôn có vầng sáng dịu màu vàng hổ phách
+      const coreBulgeRadius = CONFIG.coreRadius * 1.5 * zoom;
+      const coreBulgeAlpha = Math.min(1.0, expansionGlobalFactor) * 0.45;
+      const bulgeGrad = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, coreBulgeRadius);
+      bulgeGrad.addColorStop(0, `rgba(255, 240, 200, ${coreBulgeAlpha * 0.9})`);
+      bulgeGrad.addColorStop(0.3, `rgba(255, 190, 100, ${coreBulgeAlpha * 0.5})`);
+      bulgeGrad.addColorStop(0.7, `rgba(160, 130, 220, ${coreBulgeAlpha * 0.15})`);
+      bulgeGrad.addColorStop(1, "rgba(3, 4, 8, 0)");
+      ctx.fillStyle = bulgeGrad;
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, coreBulgeRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Phục hồi blend mode mặc định
+      ctx.globalCompositeOperation = "source-over";
+
+      requestAnimationFrame(render);
+    }
+
+    requestAnimationFrame(render);
+  </script>
+</body>
+</html>
